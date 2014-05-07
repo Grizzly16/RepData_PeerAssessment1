@@ -368,15 +368,3 @@ xyplot(steps ~ interval | weekDayOrEnd, data = weekDayOrEndAvg, layout = c(1,
 
 ![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
 
-```r
-
-
-# weekEndSteps <-
-# activityDataWithAvg[(weekdays(as.Date(activityDataWithAvg$date)) %in%
-# c('Saturday','Sunday')),] weekDaySteps <-
-# activityDataWithAvg[!(weekdays(as.Date(activityDataWithAvg$date)) %in%
-# c('Saturday','Sunday')),] weekEndStepsPerInt <- aggregate(steps ~
-# interval, weekEndSteps, mean) weekDayStepsPerInt <- aggregate(steps ~
-# interval, weekDaySteps, mean)
-```
-

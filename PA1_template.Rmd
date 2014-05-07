@@ -1,20 +1,69 @@
 # Reproducible Research: Peer Assessment 1
 
-
 ## Loading and preprocessing the data
-
-
+```{r read in and process}
+activityData <- read.csv(file="activity.csv") 
+```
 
 ## What is mean total number of steps taken per day?
-
-
-
+```{r get mean steps per day}
+meanSteps <- aggregate(steps ~ date, activityData, mean)
+medianSteps <- aggregate(steps ~ date, activityData, median)
+hist(x=meanSteps$steps, main="Average steps per day", xlab="Mean Steps per day")
+meanSteps
+medianSteps
+```
+ 
 ## What is the average daily activity pattern?
-
-
-
+```{r step information per interval}
+stepsPerInterval <- aggregate(steps ~ interval, activityData, mean)
+plot(x=stepsPerInterval$interval, y=stepsPerInterval$steps, type="l", xlab = "Interval", ylab = "Avg qty of steps")
+maxInterval <- head(stepsPerInterval[order(stepsPerInterval$steps, decreasing=TRUE),], n=1)
+print(paste("Highest average steps per interval is for interval: " , maxInterval$interval, "with", maxInterval$steps))
+```
 ## Imputing missing values
+This will get us a count of how many intervals are missing step counts
+```{r}
+cleanActData <- activityData[!is.na(activityData$steps),]
+rowsWithNaSteps <- nrow(cleanActData)
+print(paste("We have", rowsWithNaSteps, "intervals with no step count reported"))
+```
 
+Now we'll take the average step count for any given interval and replace NA values with the mean step count for that interval from other days. 
+```{r}
+#merge the data with the averge step count for a given interval
+activityDataWithAvg <- merge(activityData, stepsPerInterval, by.x="interval", by.y="interval")
+# sort it back into day/interval order
+activityDataWithAvg <- activityDataWithAvg[order(activityDataWithAvg$date,activityDataWithAvg$interval),]
+# overlay steps data
+activityDataWithAvg$steps.x[is.na(activityDataWithAvg$steps.x)] <- activityDataWithAvg$steps.y[is.na(activityDataWithAvg$steps.x)]
+# rename columns
+colnames(activityDataWithAvg) <- c("interval","steps","date","avgIntSteps")
 
+```
+#### Calculate cleaned up mean and medians
+```{r}
+meanCleanSteps <- aggregate(steps ~ date, activityDataWithAvg, mean)
+medianCleanSteps <- aggregate(steps ~ date, activityDataWithAvg, median)
+hist(x=meanCleanSteps$s, main="Average steps per day", xlab="Mean Steps per day")
+meanCleanSteps
+medianCleanSteps
+```
+### Comparison of inputing missing data
+Here are the average steps per day compared side by side. And with a matching ylim to scale them properly.
+```{r}
+par(mfrow=c(1,2))
+hist(x=meanSteps$steps, main="Average steps per day", xlab="Mean Steps per day with NAs",ylim=c(0,30))
+hist(x=meanCleanSteps$s, main="Average steps per day", xlab="Mean Steps per day with NAs replaced",ylim=c(0,30))
+```
+Using the mean step quantity for a given interval to update other intervals increases the average steps per day. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+Lets build two data frames. One for weekends and one for weekdays. 
+```{r}
+library(lattice)
+activityDataWithAvg$weekDayOrEnd <- ifelse(weekdays(as.Date(activityDataWithAvg$date)) %in% c("Saturday","Sunday"),"WeekEnd","WeekDay")
+weekDayOrEndAvg <- aggregate(steps ~ interval + weekDayOrEnd , activityDataWithAvg, mean)
+xyplot(steps ~ interval |weekDayOrEnd, data = weekDayOrEndAvg, layout =c(1,2),type="l", ylab="Number of Steps", xlab="Interval")
+
+```
